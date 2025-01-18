@@ -25,6 +25,7 @@ public class AlignmentCommand extends CommandBase {
     @Override
     public void execute(){
         this.driveSubsystem.drive(0.0, 0.0, 0.0, false, false);
+    
     }
 
     @Override

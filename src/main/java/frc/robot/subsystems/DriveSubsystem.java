@@ -61,7 +61,7 @@ public class DriveSubsystem extends SubsystemBase {
 
   SwerveModule frontRightModule = new SwerveModule(
     "FrontRight",
-    SwerveModules.FRONTRIGHT.getDriveMotorID(),
+    SwerveModules.FRONTRIGHT.getDriveMotorID(), 
     SwerveModules.FRONTRIGHT.getTurnMotorID(),
     SwerveModules.FRONTRIGHT.getEncoderPort(),
     SwerveModules.FRONTRIGHT.getModuleLocation(),
@@ -93,7 +93,7 @@ public class DriveSubsystem extends SubsystemBase {
     backRightModule.getPosition()
   });
 
-  //dont know why we did this twice but its late and i dont feel like optimizing anymore today
+ 
   public Pose2d getLocation() {
     return this.location;
   }
@@ -148,7 +148,7 @@ public class DriveSubsystem extends SubsystemBase {
     SmartDashboard.putBoolean("Update Offsets", false);
     turnController = new PIDController(kP, kI, kD);
     turnController.setIntegratorRange(-6.283, 6.283);
-
+    
     SmartDashboard.putData("Rot", turnController);
     // SmartDashboard.putData("Field Test", field);
     resetGyroscope();
@@ -262,9 +262,7 @@ public class DriveSubsystem extends SubsystemBase {
 
   public void driveAndAngle(double fwd, double str, double angleDegree, boolean safe) {
     double rot = clamp(turnController.calculate(getRawAngle(), angleDegree), -0.8, 0.8);
-    //why tf we adding 0.025 here?
-    //whoever did that is retarded as shit
-    //wait it was me
+    
     rot = rot + Math.copySign(0.025, rot);
     drive(fwd, str, rot * -1, true, safe);
   }
