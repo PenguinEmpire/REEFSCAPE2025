@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class IntakeSubsystem extends SubsystemBase {
-    // Motor CAN IDs ( change later)
+    // Motor CAN IDs ( change later)   
     private static final int ROTATION_MOTOR_ID = 12;
     private static final int MAIN_ROLLER_MOTOR_ID = 13;
     private static final int LEFT_WHEEL_MOTOR_ID = 14;

@@ -6,81 +6,78 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.Translation2d;
 
-/**
- * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
- * constants. This class should not be used for any other purpose. All constants should be declared
- * globally (i.e. public static). Do not put anything functional in this class.
- *
- * <p>It is advised to statically import this class (or one of its inner classes) wherever the
- * constants are needed, to reduce verbosity.
- */
 public final class Constants {
-  //too lazy to do enum for drive constants
-  // first four constants are from swervedrivespecialties github
-  public static class Drive {
-    public static final double DISTANCE_PER_ROT = 1.0/8.16;
-    public static final double WHEEL_DIAMETER = 4;
-    public static final double DRIVE_REDUCTION = 8.33/1.0;
-    public static final double DRIVE_CONVERSION = WHEEL_DIAMETER * Math.PI / DRIVE_REDUCTION;
-    public static final double MAX_ANGULAR_VELOCITY = Math.PI;
-    public static final double ROT_POSITION_CONVERSION_FACTOR = 2 * Math.PI / (18.0 / 1.0);
-    
-    public static final int DRIVE_CURRENT_LIMIT = 35;
-    public static final int TURN_CURRENT_LIMIT = 20;
-    public static final int SECONDARY_CURRENT_OFFSET = 5;
-    
-  }
+    public static class Drive {
+        // Physical constants
+        public static final double WHEEL_DIAMETER = 0.1016; // 4 inches in meters
+        public static final double DRIVE_REDUCTION = 8.33; // Gear reduction for drive motor
+        public static final double DRIVE_CONVERSION = WHEEL_DIAMETER * Math.PI / DRIVE_REDUCTION; // Rotations to meters
+        public static final double MAX_SPEED = 3.0; // Maximum linear speed (m/s)
+        public static final double MAX_ANGULAR_SPEED = Math.PI; // Maximum angular speed (rad/s)
 
-  public static class Turn {
-    public static final double P = 1.5;
-    public static final double I = 0;
-    public static final double D = 0.5;
-  }
+        // TalonFX Integrated Encoder (2048 CPR)
+        public static final double DRIVE_TICKS_PER_ROTATION = 2048.0;
 
-  public static enum SwerveModules {
-    RONTLEFT(2,4,3, new Translation2d(0.381, 0.381), -(0.0431 + 0.39216 + 3.14159265 - (2 * 3.14159265))),
-    FRONTRIGHT(3,2,1, new Translation2d(0.381, -0.381), -(1.57568)),
-    BACKLEFT(0,8,7, new Translation2d(-0.381, 0.381), -(-0.97338 + 6.2831)),
-    BACKRIGHT(1,6,5, new Translation2d(-.381, -0.381), -(0.278867));
+        // Conversion for TalonFX encoder
+        public static final double DRIVE_POSITION_CONVERSION = DRIVE_CONVERSION / DRIVE_TICKS_PER_ROTATION; // Ticks to meters
+        public static final double DRIVE_VELOCITY_CONVERSION = DRIVE_POSITION_CONVERSION * 10.0; // Ticks per 100ms to m/s
 
-     //analog absolute encoder port (analog in on roborio)
-     private final int encoderPort;
-     //neo drive motor id on can loop
-     private final int driveMotorID;
-     //neo turn motor id on can loop
-     private final int turnMotorID;
-     //module location in 2d space
-     private final Translation2d moduleLocation;
-     //absolute encoder offset in radians
-     private final double encoderOffset;
-     SwerveModules(int encoderPort, int driveID, int turnID, Translation2d location, double encoderOffset) {
-       this.encoderPort = encoderPort;
-       this.driveMotorID = driveID;
-       this.turnMotorID = turnID;
-       this.moduleLocation = location;
-       this.encoderOffset = encoderOffset;
-     }
- 
-     public int getEncoderPort() {
-       return this.encoderPort;
-     }
- 
-     public int getDriveMotorID() {
-       return this.driveMotorID;
-     }
- 
-     public int getTurnMotorID() {
-       return this.turnMotorID;
-     }
- 
-     public Translation2d getModuleLocation() {
-       return this.moduleLocation;
-     } 
- 
-     public double getEncoderOffset() {
-       return this.encoderOffset;
-     }
- 
-   }
- 
- }
+        // NEO Integrated Encoder (SparkMax)
+        public static final double TURN_GEAR_RATIO = 12.0; // Example gear reduction for turn motor
+        public static final double TURN_POSITION_CONVERSION = 2 * Math.PI / TURN_GEAR_RATIO; // Rotations to radians
+        public static final double TURN_VELOCITY_CONVERSION = TURN_POSITION_CONVERSION / 60.0; // RPM to rad/s
+
+        // Motor current limits
+        public static final int DRIVE_CURRENT_LIMIT = 35; // Kraken X60 motor
+        public static final int TURN_CURRENT_LIMIT = 20; // NEO motor with SparkMax
+        public static final int SECONDARY_CURRENT_OFFSET = 5; // Buffer for drive motors
+    }
+
+    public static class Turn {
+        // PID constants for turning motor
+        public static final double P = 1.5;
+        public static final double I = 0.0;
+        public static final double D = 0.5;
+    }
+
+    public enum SwerveModules {
+        FRONTLEFT(2, 1, 3, new Translation2d(0.381, 0.381), -(0.0431 + 0.39216 + Math.PI - (2 * Math.PI))),
+        FRONTRIGHT(3, 2, 4, new Translation2d(0.381, -0.381), -(1.57568)),
+        BACKLEFT(0, 5, 6, new Translation2d(-0.381, 0.381), -(-0.97338 + 6.2831)),
+        BACKRIGHT(1, 7, 8, new Translation2d(-0.381, -0.381), -(0.278867));
+
+        private final int encoderPort;
+        private final int driveMotorID;
+        private final int turnMotorID;
+        private final Translation2d moduleLocation;
+        private final double encoderOffset;
+
+        SwerveModules(int encoderPort, int driveMotorID, int turnMotorID, Translation2d moduleLocation, double encoderOffset) {
+            this.encoderPort = encoderPort;
+            this.driveMotorID = driveMotorID;
+            this.turnMotorID = turnMotorID;
+            this.moduleLocation = moduleLocation;
+            this.encoderOffset = encoderOffset;
+        }
+
+        public int getEncoderPort() {
+            return encoderPort;
+        }
+
+        public int getDriveMotorID() {
+            return driveMotorID;
+        }
+
+        public int getTurnMotorID() {
+            return turnMotorID;
+        }
+
+        public Translation2d getModuleLocation() {
+            return moduleLocation;
+        }
+
+        public double getEncoderOffset() {
+            return encoderOffset;
+        }
+    }
+}

@@ -1,33 +1,31 @@
-@ -0,0 +1,35 @@
 package frc;
 
-import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.PS4Controller;
 
 public class ControlInput {
-    Joystick accessoryJoystick;  
-    Joystick rightJoystick;  
-    Joystick leftJoystick;
-    XboxController xboxController;
+    // Main controller
+    private final PS4Controller ps5Controller;
+
+    // PS5 controller on port 0
     public ControlInput() {
-        accessoryJoystick = new Joystick(0);
-        rightJoystick = new Joystick(1);
-        leftJoystick = new Joystick(2);
-        xboxController = new XboxController(3);
+        ps5Controller = new PS4Controller(0); 
     }
 
-    public Joystick getLeftJoystick() {
-        return leftJoystick;
-    }
-    public Joystick getRightJoystick() {
-        return rightJoystick;
-    }
-    public Joystick getAccessoryJoystick() {
-        return accessoryJoystick;
-    }
-    public XboxController getGameController() {
-        return xboxController;
+    // Accessors for PS4 controller inputs
+    public PS4Controller getController() {
+        return ps5Controller;
     }
 
-   
+    // Joystick axes for driving
+    public double getForward() {
+        return -ps5Controller.getLeftY(); // Forward/backward movement
+    }
+
+    public double getStrafe() {
+        return -ps5Controller.getLeftX(); // Strafing left/right
+    }
+
+    public double getRotation() {
+        return ps5Controller.getRightX(); // Rotation (turning)
+    }
 }
