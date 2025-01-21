@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 
 public class ElevatorSubsystem extends SubsystemBase {
-    // Replace with actual ids
+    // Replace with actual ids ( move to constants)
     private static final int LEFT_MOTOR_ID = 9; 
     private static final int RIGHT_MOTOR_ID = 10; 
 
@@ -22,7 +22,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     private static final double ENCODER_CONVERSION_FACTOR = 0.01; // Meters per revolution
     private static final double TOLERANCE = 0.05; // Tolerance for position checks in meters
 
-    // Preset positions for two stages (in meters)
+    // Preset positions for two stages (in meters) ( add more positions and move this to the positionCommand file)
     private static final double BOTTOM_POSITION = 0.0; // Bottom position
     private static final double MID_STAGE_POSITION = 1.0; // Mid-stage
     private static final double TOP_STAGE_POSITION = 2.0; // Top-stage
@@ -136,5 +136,6 @@ public class ElevatorSubsystem extends SubsystemBase {
         // Update SmartDashboard with elevator status
         SmartDashboard.putNumber("Elevator Height", getHeight());
         SmartDashboard.putBoolean("At Bottom", isAtBottom());
+       
     }
 }

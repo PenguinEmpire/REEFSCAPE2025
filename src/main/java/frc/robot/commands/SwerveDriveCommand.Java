@@ -34,26 +34,26 @@ public class SwerveDriveCommand extends Command {
 
     @Override
     public void execute() {
-        // Get inputs from ControlInput
-        double forward = applyDeadbandAndScale(controlInput.getForward(), 2.0, 0.095);
-        double strafe = applyDeadbandAndScale(controlInput.getStrafe(), 2.0, 0.095);
-        double rotation = applyDeadbandAndScale(controlInput.getRotation(), 2.0, 0.095);
+        // Get joystick inputs from ControlInput
+        double forward = applyDeadbandAndScale(controlInput.getForward(), 2.0, 0.095); // Forward/backward
+        double strafe = applyDeadbandAndScale(controlInput.getStrafe(), 2.0, 0.095);   // Left/right strafe
+        double rotation = applyDeadbandAndScale(controlInput.getRotation(), 2.0, 0.095); // Rotation
 
-        // Scale inputs to the robot's maximum speed and angular velocity
+        // Scale inputs to robot's max speed and angular velocity
         forward *= DriveConstants.MAX_SPEED;
         strafe *= DriveConstants.MAX_SPEED;
         rotation *= DriveConstants.MAX_ANGULAR_SPEED;
 
-        // Smooth rotational input using PID 
+        // Smooth rotational input with PID
         double smoothedRotation = rotationPID.calculate(rotation, 0.0);
 
-        // Drive the robot
+        // Use odometry heading for field-relative control
         driveSubsystem.drive(forward, strafe, smoothedRotation, true);
 
-        //  Output raw and processed inputs to SmartDashboard
-        SmartDashboard.putNumber("Forward Raw Input", forward);
-        SmartDashboard.putNumber("Strafe Raw Input", strafe);
-        SmartDashboard.putNumber("Rotation Raw Input", rotation);
+        // Debugging outputs on SmartDashboard
+        SmartDashboard.putNumber("Forward Input", forward);
+        SmartDashboard.putNumber("Strafe Input", strafe);
+        SmartDashboard.putNumber("Rotation Input", rotation);
         SmartDashboard.putNumber("Smoothed Rotation", smoothedRotation);
     }
 
@@ -65,7 +65,7 @@ public class SwerveDriveCommand extends Command {
 
     @Override
     public boolean isFinished() {
-        // This command runs continuously until interrupted
+        // This command runs until interrupted
         return false;
     }
 
