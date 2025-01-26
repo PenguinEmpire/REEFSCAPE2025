@@ -26,7 +26,7 @@ public class AlgaeHolderSubsystem extends SubsystemBase {
 
         // Initialize rolling motor
         rollingMotor = new CANSparkMax(AlgaeManipulator.ROLLING_MOTOR_ID, MotorType.kBrushless);
-        rollingMotor.restoreFactoryDefaults();
+        rollingMotor.restoreFactoryDefaults(); 
 
         // Initialize pivot encoder
         pivotEncoder = new DutyCycleEncoder(AlgaeManipulator.LIMIT_SWITCH_CHANNEL);
