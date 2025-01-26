@@ -85,7 +85,7 @@ public class SwerveDriveCommand extends Command {
         return false;
     }
 
-    // Helper method to apply deadband and scale joystick input
+    // Helper method to apply deadband and scale joystick input 
     private double applyDeadbandAndScale(double input, double power, double deadband) {
         if (Math.abs(input) < deadband) {
             return 0; // Apply deadband
