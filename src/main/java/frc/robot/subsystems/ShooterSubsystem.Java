@@ -5,79 +5,70 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.Shooter;
 
 public class ShooterSubsystem extends SubsystemBase {
-    // update with actual ids
-    private static final int MOTOR_ID = 11;
-
-    //update with actual channel
-    private static final int INFRARED_SENSOR_CHANNEL = 0;
-
-    // Motor power levels
-    private static final double SHOOT_POWER = 1.0; // tune and update
-    private static final double SUCK_POWER = -0.5; 
-
-    // Motor controller
+    // Shooter motor
     private final CANSparkMax shooterMotor;
 
-    // Infrared sensor
-    private final DigitalInput infraredSensor;
+    // Limit switch
+    private final DigitalInput limitSwitch;
 
     public ShooterSubsystem() {
-        // Initialize the motor controller
-        shooterMotor = new CANSparkMax(MOTOR_ID, MotorType.kBrushless);
+        // Initialize the shooter motor
+        shooterMotor = new CANSparkMax(Shooter.MOTOR_ID, MotorType.kBrushless);
+        shooterMotor.restoreFactoryDefaults();
 
-        // Configure motor settings
-        shooterMotor.setSmartCurrentLimit(40); // test for optimal amount
-
-        // Initialize the infrared sensor
-        infraredSensor = new DigitalInput(INFRARED_SENSOR_CHANNEL);
-
-        
-        SmartDashboard.putNumber("Shooter Shoot Power", SHOOT_POWER);
-        SmartDashboard.putNumber("Shooter Suck Power", SUCK_POWER);
+        // Initialize the limit switch
+        limitSwitch = new DigitalInput(Shooter.LIMIT_SWITCH_CHANNEL);
+        // Add shooter motor power to SmartDashboard for testing
+        SmartDashboard.putNumber("Shooter Power", Shooter.FORWARD_POWER);
     }
 
     /**
-     * Shoots the coral out by running the motor forward at full power.
+     * Spins the shooter motor in the forward direction.
      */
-    public void shoot() {
-        double power = SmartDashboard.getNumber("Shooter Shoot Power", SHOOT_POWER);
+    public void shootForward() {
+        double power = SmartDashboard.getNumber("Shooter Power", Shooter.FORWARD_POWER);
         shooterMotor.set(power);
     }
 
     /**
-     * Sucks the coral in by running the motor backward at half power,
-     * but stops if the infrared sensor detects the coral.
+     * Spins the shooter motor in the reverse direction.
      */
-    public void suck() {
-        if (!isCoralDetected()) {
-            double power = SmartDashboard.getNumber("Shooter Suck Power", SUCK_POWER);
-            shooterMotor.set(power);
-        } else {
-            stop(); // Stop the motor if the coral is detected
-        }
+    public void shootReverse() {
+        shooterMotor.set(Shooter.REVERSE_POWER);
     }
 
     /**
-     * Stops the motor.
+     * Stops the shooter motor.
      */
-    public void stop() {
-        shooterMotor.set(0.0);
+    public void stopShooter() {
+        shooterMotor.set(Shooter.STOP_POWER);
     }
 
     /**
-     * Checks if the infrared sensor detects the coral.
+     * Checks if the limit switch is triggered.
      *
-     * @return True if the coral is detected, false otherwise.
+     * @return True if the limit switch is pressed, false otherwise.
      */
-    public boolean isCoralDetected() {
-        return !infraredSensor.get(); // Assuming the sensor is normally open
+    public boolean isLimitSwitchTriggered() {
+        return !limitSwitch.get(); // Assuming the limit switch is normally open
     }
 
     @Override
     public void periodic() {
-        SmartDashboard.putBoolean("Coral Detected", isCoralDetected());
-        SmartDashboard.putNumber("Shooter Motor Power", shooterMotor.getAppliedOutput());
+        // Stop the shooter if the limit switch is triggered
+        if (isLimitSwitchTriggered()) {
+            stopShooter();
+
+            // Log to SmartDashboard
+            SmartDashboard.putBoolean("Shooter Limit Switch Triggered", true);
+        } else {
+            SmartDashboard.putBoolean("Shooter Limit Switch Triggered", false);
+        }
+
+        // Update SmartDashboard with shooter status
+        SmartDashboard.putNumber("Shooter Current Power", shooterMotor.get());
     }
 }
