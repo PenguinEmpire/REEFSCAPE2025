@@ -1,4 +1,4 @@
-package frc.robot.commands.utils;
+package frc.robot.utils;
 
 public class SwerveUtils {
 

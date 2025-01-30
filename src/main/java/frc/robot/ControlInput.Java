@@ -2,22 +2,29 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.PS4Controller;
 
-public class ControlInput {
-    private final PS4Controller ps5Controller;
 
-    public ControlInput() {
-        ps5Controller = new PS4Controller(0);
-    }
+public interface ControlInput {
+    double getForward();  // Forward/backward input
+    double getStrafe();   // Left/right input
+    double getRotation(); // Rotational input
 
-    public double getForward() {
-        return -ps5Controller.getLeftY();
-    }
+   
+    static ControlInput forPS4Controller(PS4Controller controller) {
+        return new ControlInput() {
+            @Override
+            public double getForward() {
+                return -controller.getLeftY(); // Forward/backward input
+            }
 
-    public double getStrafe() {
-        return -ps5Controller.getLeftX();
-    }
+            @Override
+            public double getStrafe() {
+                return -controller.getLeftX(); // Left/right input
+            }
 
-    public double getRotation() {
-        return ps5Controller.getRightX();
+            @Override
+            public double getRotation() {
+                return controller.getRightX(); // Rotational input
+            }
+        };
     }
 }

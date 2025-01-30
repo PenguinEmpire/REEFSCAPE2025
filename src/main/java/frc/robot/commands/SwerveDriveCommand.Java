@@ -1,95 +1,90 @@
 package frc.robot.commands;
 
-import frc.ControlInput;
-import frc.robot.Constants.Drive;
-import frc.robot.subsystems.DriveSubsystem;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants.Drive;
+import frc.robot.ControlInput;
+import frc.robot.subsystems.DriveSubsystem;
 
 public class SwerveDriveCommand extends Command {
-    private final DriveSubsystem driveSubsystem;
+    private final DriveSubsystem subsystem;
     private final ControlInput controlInput;
 
-    // PID Controller for smoothing rotational input
     private final PIDController rotationPID;
+    private final PIDController forwardPID;
+    private final PIDController strafePID;
 
-    public SwerveDriveCommand(DriveSubsystem driveSubsystem, ControlInput controlInput) {
-        this.driveSubsystem = driveSubsystem;
+    private final SlewRateLimiter forwardLimiter = new SlewRateLimiter(3.0);
+    private final SlewRateLimiter strafeLimiter = new SlewRateLimiter(3.0);
+    private final SlewRateLimiter rotationLimiter = new SlewRateLimiter(3.0);
+
+    public SwerveDriveCommand(DriveSubsystem subsystem, ControlInput controlInput) {
+        this.subsystem = subsystem;
         this.controlInput = controlInput;
 
-        // Declare subsystem dependencies
-        addRequirements(driveSubsystem);
+        addRequirements(subsystem);
         setName("SwerveDrive");
 
-        // Initialize rotation PID controller
-        rotationPID = new PIDController(0.015, 0.001, 0.0001); 
+        rotationPID = new PIDController(0.015, 0.001, 0.0001);
+        forwardPID = new PIDController(0, 0, 0);
+        strafePID = new PIDController(0, 0, 0);
 
-        // Add SmartDashboard sliders for tuning
         SmartDashboard.putNumber("Rotation PID P", rotationPID.getP());
         SmartDashboard.putNumber("Rotation PID I", rotationPID.getI());
         SmartDashboard.putNumber("Rotation PID D", rotationPID.getD());
-        SmartDashboard.putBoolean("Field Relative", true); // Default to field-relative control
-        SmartDashboard.putNumber("Joystick Deadband", 0.095); // Default deadband
+        SmartDashboard.putNumber("Joystick Deadband", 0.095);
+        SmartDashboard.putBoolean("Field Relative", true);
     }
 
     @Override
     public void initialize() {
-        // Reset rotation PID at the start of the command
         rotationPID.reset();
+        forwardPID.reset();
+        strafePID.reset();
     }
 
     @Override
     public void execute() {
-        // Update PID values from SmartDashboard
         rotationPID.setP(SmartDashboard.getNumber("Rotation PID P", rotationPID.getP()));
         rotationPID.setI(SmartDashboard.getNumber("Rotation PID I", rotationPID.getI()));
         rotationPID.setD(SmartDashboard.getNumber("Rotation PID D", rotationPID.getD()));
 
-        // Get joystick inputs from ControlInput
         double deadband = SmartDashboard.getNumber("Joystick Deadband", 0.095);
-        double forward = applyDeadbandAndScale(controlInput.getForward(), 2.0, deadband); // Forward/backward
-        double strafe = applyDeadbandAndScale(controlInput.getStrafe(), 2.0, deadband);   // Left/right strafe
-        double rotation = applyDeadbandAndScale(controlInput.getRotation(), 2.0, deadband); // Rotation
+        double forward = applyDeadbandAndScale(controlInput.getForward(), 2.0, deadband);
+        double strafe = applyDeadbandAndScale(controlInput.getStrafe(), 2.0, deadband);
+        double rotation = applyDeadbandAndScale(controlInput.getRotation(), 2.0, deadband);
 
-        // Scale inputs to robot's max speed and angular velocity
-        forward *= Drive.MAX_SPEED;
-        strafe *= Drive.MAX_SPEED;
-        rotation *= Drive.MAX_ANGULAR_SPEED;
+        forward = forwardLimiter.calculate(forward * Drive.MAX_SPEED);
+        strafe = strafeLimiter.calculate(strafe * Drive.MAX_SPEED);
+        rotation = rotationLimiter.calculate(rotation * Drive.MAX_ANGULAR_SPEED);
 
-        // Smooth rotational input with PID
         double smoothedRotation = rotationPID.calculate(rotation, 0.0);
-
-        // Check field-relative toggle
         boolean fieldRelative = SmartDashboard.getBoolean("Field Relative", true);
 
-        // Use odometry heading for field-relative control
-        driveSubsystem.drive(forward, strafe, smoothedRotation, fieldRelative);
+        subsystem.drive(forward, strafe, smoothedRotation, fieldRelative);
 
-        // Debugging outputs on SmartDashboard
         SmartDashboard.putNumber("Forward Input", forward);
         SmartDashboard.putNumber("Strafe Input", strafe);
         SmartDashboard.putNumber("Rotation Input", rotation);
         SmartDashboard.putNumber("Smoothed Rotation", smoothedRotation);
     }
 
+    private double applyDeadbandAndScale(double input, double power, double deadband) {
+        if (Math.abs(input) < deadband) {
+            return 0;
+        }
+        return Math.copySign(Math.pow(input, power), input);
+    }
+
     @Override
     public void end(boolean interrupted) {
-        // Stop the robot when the command ends
-        driveSubsystem.drive(0, 0, 0, true);
+        subsystem.drive(0, 0, 0, true);
     }
 
     @Override
     public boolean isFinished() {
-        // This command runs until interrupted
         return false;
-    }
-
-    // Helper method to apply deadband and scale joystick input 
-    private double applyDeadbandAndScale(double input, double power, double deadband) {
-        if (Math.abs(input) < deadband) {
-            return 0; // Apply deadband
-        }
-        return Math.copySign(Math.pow(input, power), input); // Power curve for finer control
     }
 }

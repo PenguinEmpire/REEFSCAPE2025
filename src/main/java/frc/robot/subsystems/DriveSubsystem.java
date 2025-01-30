@@ -1,21 +1,18 @@
 package frc.robot.subsystems;
 
-import com.kauailabs.navx.frc.AHRS;
-import edu.wpi.first.wpilibj.SerialPort;
-import edu.wpi.first.math.controller.PIDController;
+import com.studica.frc.AHRS;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.drivetrain.SwerveModule;
+import frc.robot.module.SwerveModule;
 
 public class DriveSubsystem extends SubsystemBase {
 
@@ -33,17 +30,34 @@ public class DriveSubsystem extends SubsystemBase {
     private Pose2d location;
 
     public DriveSubsystem() {
-        // Initialize components
-        navX = new AHRS(SerialPort.Port.kUSB);
+        navX = new AHRS(AHRS.NavXComType.kUSB1);
         field = new Field2d();
 
-        // Initialize Swerve Modules
-        frontLeftModule = createSwerveModule(Constants.SwerveModules.FRONTLEFT, "FrontLeft");
-        frontRightModule = createSwerveModule(Constants.SwerveModules.FRONTRIGHT, "FrontRight");
-        backLeftModule = createSwerveModule(Constants.SwerveModules.BACKLEFT, "BackLeft");
-        backRightModule = createSwerveModule(Constants.SwerveModules.BACKRIGHT, "BackRight");
+        // Initialize Swerve Modules using correct constructor
+        frontLeftModule = new SwerveModule(
+            Constants.SwerveModules.FRONTLEFT.getDriveMotorID(),
+            Constants.SwerveModules.FRONTLEFT.getTurnMotorID(),
+            Constants.SwerveModules.FRONTLEFT.getEncoderOffset()
+        );
 
-        // Initialize kinematics and odometry
+        frontRightModule = new SwerveModule(
+            Constants.SwerveModules.FRONTRIGHT.getDriveMotorID(),
+            Constants.SwerveModules.FRONTRIGHT.getTurnMotorID(),
+            Constants.SwerveModules.FRONTRIGHT.getEncoderOffset()
+        );
+
+        backLeftModule = new SwerveModule(
+            Constants.SwerveModules.BACKLEFT.getDriveMotorID(),
+            Constants.SwerveModules.BACKLEFT.getTurnMotorID(),
+            Constants.SwerveModules.BACKLEFT.getEncoderOffset()
+        );
+
+        backRightModule = new SwerveModule(
+            Constants.SwerveModules.BACKRIGHT.getDriveMotorID(),
+            Constants.SwerveModules.BACKRIGHT.getTurnMotorID(),
+            Constants.SwerveModules.BACKRIGHT.getEncoderOffset()
+        );
+
         kinematics = new SwerveDriveKinematics(
             Constants.SwerveModules.FRONTLEFT.getModuleLocation(),
             Constants.SwerveModules.FRONTRIGHT.getModuleLocation(),
@@ -51,10 +65,13 @@ public class DriveSubsystem extends SubsystemBase {
             Constants.SwerveModules.BACKRIGHT.getModuleLocation()
         );
 
+        // Use a local variable to store the initial gyro angle instead of calling getAngle2d() directly
+        Rotation2d initialGyroAngle = Rotation2d.fromDegrees(-navX.getAngle());
+
         odometry = new SwerveDriveOdometry(
             kinematics,
-            getAngle2d(),
-            new SwerveModulePosition[] {
+            initialGyroAngle,
+            new SwerveModulePosition[]{
                 frontLeftModule.getPosition(),
                 frontRightModule.getPosition(),
                 backLeftModule.getPosition(),
@@ -62,20 +79,7 @@ public class DriveSubsystem extends SubsystemBase {
             }
         );
 
-        // Publish data to SmartDashboard
-        SmartDashboard.putData("Field", field);
-        resetGyroscope();
-    }
-
-    private SwerveModule createSwerveModule(Constants.SwerveModules module, String name) {
-        return new SwerveModule(
-            name,
-            module.getDriveMotorID(),
-            module.getTurnMotorID(),
-            module.getEncoderPort(),
-            module.getModuleLocation(),
-            module.getEncoderOffset()
-        );
+        field.setRobotPose(new Pose2d());
     }
 
     public void resetGyroscope() {
@@ -90,37 +94,31 @@ public class DriveSubsystem extends SubsystemBase {
         return Rotation2d.fromDegrees(-navX.getAngle());
     }
 
+    @Override
     public void periodic() {
-        // Update odometry periodically
         location = odometry.update(
             getAngle2d(),
-            new SwerveModulePosition[] {
+            new SwerveModulePosition[]{
                 frontLeftModule.getPosition(),
                 frontRightModule.getPosition(),
                 backLeftModule.getPosition(),
                 backRightModule.getPosition()
             }
         );
-
-        // Update field visualization
         field.setRobotPose(location);
     }
 
     public void drive(double fwd, double str, double rot, boolean fieldRelative) {
-        SwerveModuleState[] states;
-        if (fieldRelative) {
-            states = kinematics.toSwerveModuleStates(
-                ChassisSpeeds.fromFieldRelativeSpeeds(fwd, str, rot, getAngle2d())
-            );
-        } else {
-            states = kinematics.toSwerveModuleStates(new ChassisSpeeds(fwd, str, rot));
-        }
+        SwerveModuleState[] states = fieldRelative
+            ? kinematics.toSwerveModuleStates(
+                ChassisSpeeds.fromFieldRelativeSpeeds(fwd, str, rot, getAngle2d()))
+            : kinematics.toSwerveModuleStates(new ChassisSpeeds(fwd, str, rot));
 
         SwerveDriveKinematics.desaturateWheelSpeeds(states, Constants.Drive.MAX_SPEED);
 
-        frontLeftModule.setTargetState(states[0]);
-        frontRightModule.setTargetState(states[1]);
-        backLeftModule.setTargetState(states[2]);
-        backRightModule.setTargetState(states[3]);
+        frontLeftModule.setDesiredState(states[0]);
+        frontRightModule.setDesiredState(states[1]);
+        backLeftModule.setDesiredState(states[2]);
+        backRightModule.setDesiredState(states[3]);
     }
 }
