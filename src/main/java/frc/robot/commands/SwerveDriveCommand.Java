@@ -65,6 +65,11 @@ public class SwerveDriveCommand extends Command {
 
         subsystem.drive(forward, strafe, smoothedRotation, fieldRelative);
 
+       
+        SmartDashboard.putNumber("Gyro Yaw", subsystem.getNavX().getYaw());
+        SmartDashboard.putNumber("Gyro Angle", subsystem.getNavX().getAngle());
+        SmartDashboard.putNumber("Gyro Heading", subsystem.getHeading());
+
         SmartDashboard.putNumber("Forward Input", forward);
         SmartDashboard.putNumber("Strafe Input", strafe);
         SmartDashboard.putNumber("Rotation Input", rotation);

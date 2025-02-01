@@ -5,7 +5,6 @@ import com.ctre.phoenix6.controls.VelocityDutyCycle;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.AbsoluteEncoder;
-import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -21,7 +20,6 @@ import frc.robot.Constants;
 public class SwerveModule {
     private final TalonFX m_drivingTalonFX;
     private final SparkMax m_turningSparkMax;
-    private final RelativeEncoder m_drivingEncoder;
     private final AbsoluteEncoder m_turningEncoder;
     private final SparkClosedLoopController m_turningPIDController;
     private final VelocityDutyCycle m_driveVelocityControl = new VelocityDutyCycle(0);
@@ -29,6 +27,7 @@ public class SwerveModule {
     private SwerveModuleState m_desiredState = new SwerveModuleState(0.0, new Rotation2d());
 
     public SwerveModule(int drivingCANId, int turningCANId, double chassisAngularOffset) {
+   
         m_drivingTalonFX = new TalonFX(drivingCANId);
         TalonFXConfiguration driveConfig = new TalonFXConfiguration();
         driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -43,6 +42,7 @@ public class SwerveModule {
 
         m_drivingTalonFX.getConfigurator().apply(driveConfig, 50);
 
+      
         m_turningSparkMax = new SparkMax(turningCANId, MotorType.kBrushless);
         SparkMaxConfig turnConfig = new SparkMaxConfig();
         turnConfig.inverted(Constants.Drive.TURN_MOTOR_INVERTED);
@@ -59,15 +59,15 @@ public class SwerveModule {
         m_turningSparkMax.configure(turnConfig, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
         m_turningEncoder = m_turningSparkMax.getAbsoluteEncoder();
         m_turningPIDController = m_turningSparkMax.getClosedLoopController();
-        m_drivingEncoder = m_turningSparkMax.getEncoder();
         m_chassisAngularOffset = chassisAngularOffset;
         m_desiredState.angle = new Rotation2d(m_turningEncoder.getPosition());
-        m_drivingEncoder.setPosition(0);
     }
+
 
     public SwerveModuleState getState() {
         return m_desiredState;
     }
+
 
     public SwerveModulePosition getPosition() {
         return new SwerveModulePosition(
@@ -76,24 +76,29 @@ public class SwerveModule {
         );
     }
 
+
     public void setDesiredState(SwerveModuleState desiredState) {
+        // Apply chassis angular offset
         SwerveModuleState correctedDesiredState = new SwerveModuleState(
                 desiredState.speedMetersPerSecond,
                 desiredState.angle.plus(Rotation2d.fromRadians(m_chassisAngularOffset))
         );
 
-        double currentAngleRadians = m_turningEncoder.getPosition() * Constants.Drive.TURN_POSITION_CONVERSION;
-        Rotation2d currentAngle = new Rotation2d(currentAngleRadians);
+        
+        Rotation2d currentAngle = new Rotation2d(m_turningEncoder.getPosition() * Constants.Drive.TURN_POSITION_CONVERSION);
         Rotation2d delta = correctedDesiredState.angle.minus(currentAngle);
 
         if (Math.abs(delta.getRadians()) > Math.PI / 2) {
             correctedDesiredState = new SwerveModuleState(
-                    -correctedDesiredState.speedMetersPerSecond,
-                    correctedDesiredState.angle.plus(Rotation2d.fromRadians(Math.PI))
+                -correctedDesiredState.speedMetersPerSecond,
+                correctedDesiredState.angle.plus(Rotation2d.fromRadians(Math.PI))
             );
         }
 
+      
         m_drivingTalonFX.setControl(m_driveVelocityControl.withVelocity(correctedDesiredState.speedMetersPerSecond));
+
+
         m_turningPIDController.setReference(
                 correctedDesiredState.angle.getRadians(),
                 SparkBase.ControlType.kPosition
@@ -101,6 +106,7 @@ public class SwerveModule {
 
         m_desiredState = correctedDesiredState;
     }
+
 
     public void resetEncoders() {
         m_drivingTalonFX.setPosition(0);

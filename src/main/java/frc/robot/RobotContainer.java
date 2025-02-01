@@ -1,6 +1,6 @@
 package frc.robot;
 
-import edu.wpi.first.wpilibj.PS4Controller;
+import edu.wpi.first.wpilibj.PS5Controller;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.commands.SwerveDriveCommand;
@@ -11,7 +11,7 @@ import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 
 public class RobotContainer {
-    private final PS4Controller ps5Controller = new PS4Controller(0);
+    private final PS5Controller ps5Controller = new PS5Controller(0);
 
     private final DriveSubsystem driveSubsystem = new DriveSubsystem();
     private final AlgaeHolderSubsystem algaeHolderSubsystem = new AlgaeHolderSubsystem();
@@ -20,7 +20,7 @@ public class RobotContainer {
     private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
 
     private final SwerveDriveCommand swerveDriveCommand = 
-        new SwerveDriveCommand(driveSubsystem, ControlInput.forPS4Controller(ps5Controller));
+        new SwerveDriveCommand(driveSubsystem, ControlInput.forPS5Controller(ps5Controller));
 
     public RobotContainer() {
         configureDefaultCommands();
@@ -33,7 +33,12 @@ public class RobotContainer {
     }
 
     private void configureButtonBindings() {
-        // Add button bindings here if needed
+        driveSubsystem.setDefaultCommand(
+            new SwerveDriveCommand(
+                driveSubsystem, 
+                ControlInput.forPS5Controller(ps5Controller) // Ensure controller input is passed
+            )
+        );
     }
 
     public Command getAutonomousCommand() {
