@@ -7,7 +7,7 @@ public interface ControlInput {
     double getStrafe();   // Left/right input
     double getRotation(); // Rotational input
 
-    static ControlInput forPS5Controller(PS5Controller controller) {
+    static ControlInput forPS5Controller(PS5Controller controller) {   // TO  DO:  switch left to right
         return new ControlInput() {
             @Override
             public double getForward() {

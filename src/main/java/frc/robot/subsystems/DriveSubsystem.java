@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.studica.frc.AHRS;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -27,10 +28,13 @@ public class DriveSubsystem extends SubsystemBase {
     private final SwerveModule backLeftModule;
     private final SwerveModule backRightModule;
 
+    private final SlewRateLimiter magLimiter = new SlewRateLimiter(Constants.Drive.MAGNITUDE_SLEW_RATE);
+    private final SlewRateLimiter rotLimiter = new SlewRateLimiter(Constants.Drive.ROTATIONAL_SLEW_RATE);
+
     private Pose2d location;
 
     public DriveSubsystem() {
-        navX = new AHRS(AHRS.NavXComType.kUSB1);
+        navX = new AHRS(AHRS.NavXComType.kMXP_SPI);
         field = new Field2d();
 
         // Initialize Swerve Modules
@@ -80,7 +84,6 @@ public class DriveSubsystem extends SubsystemBase {
 
         field.setRobotPose(new Pose2d());
     }
-
 
     public AHRS getNavX() {
         return navX;
@@ -132,10 +135,15 @@ public class DriveSubsystem extends SubsystemBase {
     }
 
     public void drive(double fwd, double str, double rot, boolean fieldRelative) {
+       
+        double fwdLimited = magLimiter.calculate(fwd);
+        double strLimited = magLimiter.calculate(str);
+        double rotLimited = rotLimiter.calculate(rot);
+
         SwerveModuleState[] states = fieldRelative
             ? kinematics.toSwerveModuleStates(
-                ChassisSpeeds.fromFieldRelativeSpeeds(fwd, str, rot, Rotation2d.fromDegrees(-navX.getAngle())))
-            : kinematics.toSwerveModuleStates(new ChassisSpeeds(fwd, str, rot));
+                ChassisSpeeds.fromFieldRelativeSpeeds(fwdLimited, strLimited, rotLimited, Rotation2d.fromDegrees(-navX.getAngle())))
+            : kinematics.toSwerveModuleStates(new ChassisSpeeds(fwdLimited, strLimited, rotLimited));
 
         SwerveDriveKinematics.desaturateWheelSpeeds(states, Constants.Drive.MAX_SPEED);
 
@@ -150,5 +158,12 @@ public class DriveSubsystem extends SubsystemBase {
         backLeftModule.resetEncoders();
         frontRightModule.resetEncoders();
         backRightModule.resetEncoders();
+    }
+
+    public void setX() {
+        frontLeftModule.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
+        frontRightModule.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+        backLeftModule.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+        backRightModule.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
     }
 }

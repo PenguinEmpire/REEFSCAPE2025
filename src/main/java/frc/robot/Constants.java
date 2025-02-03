@@ -94,7 +94,7 @@ public final class Constants {
 
     public static class Intake {
         public static final int HORIZONTAL_ROLLER_MOTOR_ID = 11;
-        public static final int LEFT_VERTICAL_ROLLER_MOTOR_ID = 12;
+        public static final int LEFT_VERTICAL_ROLLER_MOTOR_ID = 19;
         public static final int RIGHT_VERTICAL_ROLLER_MOTOR_ID = 13;
         public static final int ROTATION_MOTOR_ID = 14;
 
