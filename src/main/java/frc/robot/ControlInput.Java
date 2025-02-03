@@ -16,7 +16,7 @@ public interface ControlInput {
 
             @Override
             public double getStrafe() {
-                return -controller.getLeftX(); // Left/right input
+                return controller.getLeftX(); // Left/right input
             }
 
             @Override
