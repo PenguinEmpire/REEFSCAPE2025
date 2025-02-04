@@ -1,7 +1,6 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.Drive;
@@ -16,10 +15,6 @@ public class SwerveDriveCommand extends Command {
     private final PIDController forwardPID;
     private final PIDController strafePID;
 
-    private final SlewRateLimiter forwardLimiter = new SlewRateLimiter(3.0);
-    private final SlewRateLimiter strafeLimiter = new SlewRateLimiter(3.0);
-    private final SlewRateLimiter rotationLimiter = new SlewRateLimiter(3.0);
-
     public SwerveDriveCommand(DriveSubsystem subsystem, ControlInput controlInput) {
         this.subsystem = subsystem;
         this.controlInput = controlInput;
@@ -30,12 +25,6 @@ public class SwerveDriveCommand extends Command {
         rotationPID = new PIDController(0.015, 0.001, 0.0001);
         forwardPID = new PIDController(0, 0, 0);
         strafePID = new PIDController(0, 0, 0);
-
-        SmartDashboard.putNumber("Rotation PID P", rotationPID.getP());
-        SmartDashboard.putNumber("Rotation PID I", rotationPID.getI());
-        SmartDashboard.putNumber("Rotation PID D", rotationPID.getD());
-        SmartDashboard.putNumber("Joystick Deadband", 0.095);
-        SmartDashboard.putBoolean("Field Relative", true);
     }
 
     @Override
@@ -47,25 +36,23 @@ public class SwerveDriveCommand extends Command {
 
     @Override
     public void execute() {
-        rotationPID.setP(SmartDashboard.getNumber("Rotation PID P", rotationPID.getP()));
-        rotationPID.setI(SmartDashboard.getNumber("Rotation PID I", rotationPID.getI()));
-        rotationPID.setD(SmartDashboard.getNumber("Rotation PID D", rotationPID.getD()));
+        double deadband = 0.095;
 
-        double deadband = SmartDashboard.getNumber("Joystick Deadband", 0.095);
         double forward = applyDeadbandAndScale(controlInput.getForward(), 2.0, deadband);
         double strafe = applyDeadbandAndScale(controlInput.getStrafe(), 2.0, deadband);
         double rotation = applyDeadbandAndScale(controlInput.getRotation(), 2.0, deadband);
 
-        forward = forwardLimiter.calculate(forward * Drive.MAX_SPEED);
-        strafe = strafeLimiter.calculate(strafe * Drive.MAX_SPEED);
-        rotation = rotationLimiter.calculate(rotation * Drive.MAX_ANGULAR_SPEED);
+        forward *= Drive.MAX_SPEED;
+        strafe *= Drive.MAX_SPEED;
+        rotation *= Drive.MAX_ANGULAR_SPEED;
+        
 
         double smoothedRotation = rotationPID.calculate(rotation, 0.0);
-        boolean fieldRelative = SmartDashboard.getBoolean("Field Relative", true);
 
-        subsystem.drive(forward, strafe, smoothedRotation, fieldRelative);
+        // Apply inputs to the swerve drive
+        subsystem.drive(forward, strafe, smoothedRotation, true);
 
-       
+        // Debug output to SmartDashboard
         SmartDashboard.putNumber("Gyro Yaw", subsystem.getNavX().getYaw());
         SmartDashboard.putNumber("Gyro Angle", subsystem.getNavX().getAngle());
         SmartDashboard.putNumber("Gyro Heading", subsystem.getHeading());

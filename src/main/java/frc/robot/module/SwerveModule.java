@@ -10,9 +10,8 @@ import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.ClosedLoopConfig;
+import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.config.SparkBaseConfig; 
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -28,7 +27,6 @@ public class SwerveModule {
     private SwerveModuleState m_desiredState = new SwerveModuleState(0.0, new Rotation2d());
 
     public SwerveModule(int drivingCANId, int turningCANId, double chassisAngularOffset) {
-      
         m_drivingTalonFX = new TalonFX(drivingCANId);
         TalonFXConfiguration driveConfig = new TalonFXConfiguration();
         driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -43,31 +41,24 @@ public class SwerveModule {
 
         m_drivingTalonFX.getConfigurator().apply(driveConfig, 50);
 
-        
         m_turningSparkMax = new SparkMax(turningCANId, MotorType.kBrushless);
         SparkMaxConfig turnConfig = new SparkMaxConfig();
-
-
         turnConfig.inverted(Constants.Drive.TURN_MOTOR_INVERTED);
-
         turnConfig.idleMode(SparkBaseConfig.IdleMode.kBrake);
 
- 
+
         turnConfig.encoder
             .positionConversionFactor(Constants.Drive.TURN_POSITION_CONVERSION)
             .velocityConversionFactor(Constants.Drive.TURN_VELOCITY_CONVERSION);
 
         turnConfig.closedLoop
-            .feedbackSensor(ClosedLoopConfig.FeedbackSensor.kPrimaryEncoder)  
+            .feedbackSensor(ClosedLoopConfig.FeedbackSensor.kPrimaryEncoder)
             .pid(Constants.Turn.P, Constants.Turn.I, Constants.Turn.D)
             .positionWrappingEnabled(true)
             .positionWrappingMinInput(Constants.Drive.TURN_ENCODER_POSITION_PID_MIN_INPUT)
             .positionWrappingMaxInput(Constants.Drive.TURN_ENCODER_POSITION_PID_MAX_INPUT);
 
-  
         m_turningSparkMax.configure(turnConfig, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
-
-
         m_turningEncoder = m_turningSparkMax.getAbsoluteEncoder();
         m_turningPIDController = m_turningSparkMax.getClosedLoopController();
 
@@ -87,21 +78,10 @@ public class SwerveModule {
     }
 
     public void setDesiredState(SwerveModuleState desiredState) {
-       
         SwerveModuleState correctedDesiredState = new SwerveModuleState(
             desiredState.speedMetersPerSecond,
             desiredState.angle.plus(Rotation2d.fromRadians(m_chassisAngularOffset))
         );
-
-        Rotation2d currentAngle = new Rotation2d(m_turningEncoder.getPosition() * Constants.Drive.TURN_POSITION_CONVERSION);
-        Rotation2d delta = correctedDesiredState.angle.minus(currentAngle);
-
-        if (Math.abs(delta.getRadians()) > Math.PI / 2) {
-            correctedDesiredState = new SwerveModuleState(
-                -correctedDesiredState.speedMetersPerSecond,
-                correctedDesiredState.angle.plus(Rotation2d.fromRadians(Math.PI))
-            );
-        }
 
         m_drivingTalonFX.setControl(m_driveVelocityControl.withVelocity(correctedDesiredState.speedMetersPerSecond));
 

@@ -3,26 +3,15 @@ package frc.robot;
 import edu.wpi.first.wpilibj.PS5Controller;
 
 public interface ControlInput {
-    double getForward();  // Forward/backward input
-    double getStrafe();   // Left/right input
-    double getRotation(); // Rotational input
+    double getForward();
+    double getStrafe();
+    double getRotation();
 
-    static ControlInput forPS5Controller(PS5Controller controller) {   // TO  DO:  switch left to right
+    static ControlInput forPS5Controller(PS5Controller controller) {
         return new ControlInput() {
-            @Override
-            public double getForward() {
-                return -controller.getLeftY(); // Forward/backward input
-            }
-
-            @Override
-            public double getStrafe() {
-                return controller.getLeftX(); // Left/right input
-            }
-
-            @Override
-            public double getRotation() {
-                return controller.getRightX(); // Rotational input
-            }
+            public double getForward() { return -controller.getLeftY(); }
+            public double getStrafe() { return controller.getLeftX(); }
+            public double getRotation() { return controller.getRightX(); }
         };
     }
 }
