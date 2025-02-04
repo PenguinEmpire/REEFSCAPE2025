@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import com.studica.frc.AHRS;
-
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -30,7 +29,6 @@ public class DriveSubsystem extends SubsystemBase {
     private int ticks = 0;
     private boolean driveEnabled = true;
 
-    
     private final SlewRateLimiter fwdLimiter = new SlewRateLimiter(Constants.Drive.MAGNITUDE_SLEW_RATE);
     private final SlewRateLimiter strLimiter = new SlewRateLimiter(Constants.Drive.MAGNITUDE_SLEW_RATE);
     private final SlewRateLimiter rotLimiter = new SlewRateLimiter(Constants.Drive.ROTATIONAL_SLEW_RATE);
@@ -60,7 +58,7 @@ public class DriveSubsystem extends SubsystemBase {
         resetEncoders();
     }
 
-  
+   
     public void resetEncoders() {
         frontLeftModule.resetEncoders();
         frontRightModule.resetEncoders();
@@ -68,26 +66,23 @@ public class DriveSubsystem extends SubsystemBase {
         backRightModule.resetEncoders();
     }
 
-
     public void resetGyroscope() {
         navX.reset();
     }
 
-   
     public Rotation2d getAngle2d() {
         return Rotation2d.fromDegrees(-navX.getYaw());
     }
 
-   
     public double getHeading() {
         return getAngle2d().getDegrees();
     }
-
 
     public AHRS getNavX() {
         return navX;
     }
 
+   
     private SwerveModulePosition[] getModulePositions() {
         return new SwerveModulePosition[]{
             frontLeftModule.getPosition(),
@@ -110,16 +105,14 @@ public class DriveSubsystem extends SubsystemBase {
         }
     }
 
-   
     private void updateOdometry() {
         location = odometry.update(getAngle2d(), getModulePositions());
     }
 
     public Pose2d getPosition() {
-    return location;
+        return location;
     }
 
-   
     private void updateDashboard() {
         SmartDashboard.putNumber("Odometry X", location.getX());
         SmartDashboard.putNumber("Odometry Y", location.getY());
@@ -145,8 +138,6 @@ public class DriveSubsystem extends SubsystemBase {
         backLeftModule.setDesiredState(states[2]);
         backRightModule.setDesiredState(states[3]);
     }
-
-    
 
     @Override
     public void simulationPeriodic() {}
