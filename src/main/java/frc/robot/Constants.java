@@ -28,7 +28,7 @@ public final class Constants {
         public static final double TURN_POSITION_CONVERSION = 2 * Math.PI / TURN_GEAR_RATIO;
         public static final double TURN_VELOCITY_CONVERSION = TURN_POSITION_CONVERSION / 60.0;
 
-        // ✅ Fixed Gear Ratio Calculation
+        // Fixed Gear Ratio Calculation
         public static final int DRIVING_MOTOR_PINION_TEETH = 12;
         public static final double WHEEL_CIRCUMFERENCE_METERS = WHEEL_DIAMETER * Math.PI;
         public static final double DRIVING_MOTOR_REDUCTION = (45.0 * 22 * 34) / (DRIVING_MOTOR_PINION_TEETH * 15 * 24);
@@ -83,22 +83,23 @@ public final class Constants {
         public static final int FRONT_RIGHT_DRIVING_CAN_ID = 1;
         public static final int REAR_LEFT_DRIVING_CAN_ID = 3;
         public static final int REAR_RIGHT_DRIVING_CAN_ID = 4;
-        
+
         public static final boolean TURNING_MOTOR_INVERTED = true;
 
-        // Module locations (relative to the robot center)
+    
         public static final Translation2d FRONT_LEFT_LOCATION = new Translation2d(0.381, 0.381);
         public static final Translation2d FRONT_RIGHT_LOCATION = new Translation2d(0.381, -0.381);
         public static final Translation2d REAR_LEFT_LOCATION = new Translation2d(-0.381, 0.381);
         public static final Translation2d REAR_RIGHT_LOCATION = new Translation2d(-0.381, -0.381);
 
-        // Angular offsets for swerve modules
+      
         public static final double FRONT_LEFT_OFFSET = -(0.0431 + 0.39216 + Math.PI - (2 * Math.PI));
         public static final double FRONT_RIGHT_OFFSET = -(1.57568);
         public static final double REAR_LEFT_OFFSET = -(-0.97338 + 6.2831);
         public static final double REAR_RIGHT_OFFSET = -(0.278867);
     }
 
+  
     public static final class NeoMotorConstants {
         public static final double FREE_SPEED_RPM = 5676;
     }
@@ -107,6 +108,19 @@ public final class Constants {
         public static final double P = Drive.TURN_P;
         public static final double I = Drive.TURN_I;
         public static final double D = Drive.TURN_D;
+    }
+
+    public static class AlgaeHolder {
+        public static final int PIVOT_MOTOR_ID = 17;
+        public static final int ROLLING_MOTOR_ID = 18;
+        public static final int PIVOT_ENCODER_CHANNEL = 5;
+        public static final int LIMIT_SWITCH_CHANNEL = 6;
+
+        public static final double PIVOT_P = 0.1;
+        public static final double PIVOT_I = 0.0;
+        public static final double PIVOT_D = 0.0;
+
+        public static final double ROLLING_POWER = 0.5;
     }
 
     public static class Shooter {
