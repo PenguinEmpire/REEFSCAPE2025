@@ -27,7 +27,7 @@ public class SwerveUtils {
      * @param _target The target angle (in radians) the algorithm will step towards.  Can lie outside the 0 to 2*PI range.
      * @param _stepsize The maximum step size that can be taken (in radians).
      * @return The new angle (in radians) for {@code _current} after performing the specified step towards the specified target.
-     * the value wil be between 0 and 2PI
+     * This value will always lie in the range 0 to 2*PI (exclusive).
      */
     public static double StepTowardsCircular(double _current, double _target, double _stepsize) {
         _current = WrapAngle(_current);
@@ -73,7 +73,7 @@ public class SwerveUtils {
     public static double WrapAngle(double _angle) {
         double twoPi = 2*Math.PI;
 
-        if (_angle == twoPi) { 
+        if (_angle == twoPi) { // Handle this case separately to avoid floating point errors with the floor after the division in the case below
             return 0.0;
         }
         else if (_angle > twoPi) {
@@ -85,46 +85,5 @@ public class SwerveUtils {
         else {
             return _angle;
         }
-    }
-
-    // New methods for Kraken X60 and NEO conversion
-
-    /**
-     * Converts a velocity command to the Kraken X60 motor's native units.
-     * @param velocity The target velocity in meters per second.
-     * @param wheelDiameter The diameter of the wheel in meters.
-     * @param gearReduction The gear reduction ratio.
-     * @return The velocity in Kraken X60 motor encoder units.
-     */
-    public static double velocityToMotorUnits(double velocity, double wheelDiameter, double gearReduction) {
-        double wheelCircumference = Math.PI * wheelDiameter;  // Circumference of the wheel (in meters)
-        double rotationsPerSecond = velocity / wheelCircumference;  // Speed in wheel rotations per second
-        double motorUnitsPerRevolution = 2048;  // Kraken X60 has 2048 ticks per full rotation (native encoder units)
-        double motorSpeedUnits = rotationsPerSecond * motorUnitsPerRevolution * gearReduction;  // Apply gear reduction
-        return motorSpeedUnits;
-    }
-
-    /**
-     * Converts an angle (in radians) to a steering motor position.
-     * Ensures the angle stays within the 0 to 2*PI range for smooth control.
-     * @param angle The target angle in radians.
-     * @return The target angle wrapped in the 0 to 2*PI range.
-     */
-    public static double angleToMotorPosition(double angle) {
-        return WrapAngle(angle);  // Ensures the angle is within the 0 to 2*PI range
-    }
-
-    /**
-     * Converts an angular velocity command to NEO steering motor's native units.
-     * This is useful when setting up rotational velocity commands for swerve drive.
-     * @param angularVelocity The target angular velocity in radians per second.
-     * @param wheelBase The distance between the wheels.
-     * @param gearReduction The gear reduction ratio for the steering motor.
-     * @return The angular velocity in NEO steering motor encoder units.
-     */
-    public static double angularVelocityToMotorUnits(double angularVelocity, double wheelBase, double gearReduction) {
-        double motorUnitsPerRevolution = 2048;  // NEO has 2048 ticks per full rotation (native encoder units)
-        double rotationsPerSecond = angularVelocity / (2 * Math.PI);  // Convert radians per second to rotations per second
-        return rotationsPerSecond * motorUnitsPerRevolution * gearReduction;
     }
 }

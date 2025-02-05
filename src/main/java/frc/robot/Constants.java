@@ -2,19 +2,21 @@ package frc.robot;
 
 import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.util.Units;
 
 public final class Constants {
     public static class Drive {
         public static final double WHEEL_DIAMETER = 0.1016; // 4 inches
-        public static final double DRIVE_REDUCTION = 8.33;  // Same as last year (Swerve X)
+        public static final double DRIVE_REDUCTION = 8.33;
         public static final double DRIVE_CONVERSION = WHEEL_DIAMETER * Math.PI / DRIVE_REDUCTION;
         public static final double MAX_SPEED = 4.7; 
         public static final double MAX_ANGULAR_SPEED = 2 * Math.PI;
 
         // Slew Rates (to prevent sharp accelerations)
-        public static final double DIRECTION_SLEW_RATE = 1.2; // radians per second
-        public static final double MAGNITUDE_SLEW_RATE = 1.8; // percent per second
-        public static final double ROTATIONAL_SLEW_RATE = 2.0; // percent per second
+        public static final double DIRECTION_SLEW_RATE = 1.2;
+        public static final double MAGNITUDE_SLEW_RATE = 1.8;
+        public static final double ROTATIONAL_SLEW_RATE = 2.0;
 
         // Kraken X60 Encoder Values
         public static final double KRAKEN_TICKS_PER_ROTATION = 2048.0;
@@ -22,25 +24,34 @@ public final class Constants {
         public static final double KRAKEN_VELOCITY_CONVERSION = KRAKEN_POSITION_CONVERSION * 10.0;
 
         // Turn Motor Configurations
-        public static final double TURN_GEAR_RATIO = 12.0;
+        public static final double TURN_GEAR_RATIO = 18.0;
         public static final double TURN_POSITION_CONVERSION = 2 * Math.PI / TURN_GEAR_RATIO;
         public static final double TURN_VELOCITY_CONVERSION = TURN_POSITION_CONVERSION / 60.0;
 
+        // ✅ Fixed Gear Ratio Calculation
+        public static final int DRIVING_MOTOR_PINION_TEETH = 12;
+        public static final double WHEEL_CIRCUMFERENCE_METERS = WHEEL_DIAMETER * Math.PI;
+        public static final double DRIVING_MOTOR_REDUCTION = (45.0 * 22 * 34) / (DRIVING_MOTOR_PINION_TEETH * 15 * 24);
+        public static final double DRIVING_MOTOR_FREE_SPEED_RPS = 5676.0 / 60; // Neo Free Speed
+        public static final double DRIVE_WHEEL_FREE_SPEED_RPS = (DRIVING_MOTOR_FREE_SPEED_RPS * WHEEL_CIRCUMFERENCE_METERS)
+            / DRIVING_MOTOR_REDUCTION;
+
         // Current Limits
-        public static final int KRAKEN_CURRENT_LIMIT = 40; // Updated for Kraken X60
+        public static final int KRAKEN_CURRENT_LIMIT = 40;
         public static final int TURN_CURRENT_LIMIT = 30;
 
-        // Kraken X60 PID Values (Initial Estimates - Tune on actual bot)
-        public static final double KRAKEN_P = 0.08;  
-        public static final double KRAKEN_I = 0.0001;  
-        public static final double KRAKEN_D = 0.01; 
-        public static final double KRAKEN_KV = 0.12;
-        public static final double KRAKEN_KS = 0.24;
+        //  Updated Kraken X60 PID Values for Stability
+        public static final double KRAKEN_P = 0.12; // ✅ Increased for better response
+        public static final double KRAKEN_I = 0.0;  // ✅No integral needed
+        public static final double KRAKEN_D = 0.0;  //  Removed to prevent overshoot
+        public static final double KRAKEN_KV = 1.51; //  From SYSID tuning
+        public static final double KRAKEN_KS = 0.32;
+        public static final double KRAKEN_KA = 0.27;
 
-        // Turning PID
-        public static final double TURN_P = 1.5;
+        //  Updated Safe Turning PID Values (Prevent gear grinding)
+        public static final double TURN_P = 0.6;  //  Reduced from 1.0 to prevent oscillation
         public static final double TURN_I = 0.0;
-        public static final double TURN_D = 0.5;
+        public static final double TURN_D = 0.01;
 
         // Turning Encoder Range
         public static final double TURN_ENCODER_POSITION_PID_MIN_INPUT = 0.0;
@@ -49,10 +60,20 @@ public final class Constants {
         // Motor Directions
         public static final InvertedValue KRAKEN_INVERTED = InvertedValue.Clockwise_Positive;
         public static final boolean TURN_MOTOR_INVERTED = true;
+        public static final boolean TURN_ENCODER_INVERTED = false;
+
+        public static final double TRACK_WIDTH = Units.inchesToMeters(30.0);
+        public static final double WHEEL_BASE = Units.inchesToMeters(30.0);
+
+        public static final SwerveDriveKinematics KINEMATICS = new SwerveDriveKinematics(
+            new Translation2d(WHEEL_BASE / 2, TRACK_WIDTH / 2),
+            new Translation2d(WHEEL_BASE / 2, -TRACK_WIDTH / 2),
+            new Translation2d(-WHEEL_BASE / 2, TRACK_WIDTH / 2),
+            new Translation2d(-WHEEL_BASE / 2, -TRACK_WIDTH / 2)
+        );
     }
 
     public static class ModuleConstants {
-        // Motor CAN IDs
         public static final int FRONT_LEFT_TURNING_CAN_ID = 7;
         public static final int FRONT_RIGHT_TURNING_CAN_ID = 26;
         public static final int REAR_LEFT_TURNING_CAN_ID = 8;
@@ -71,11 +92,15 @@ public final class Constants {
         public static final Translation2d REAR_LEFT_LOCATION = new Translation2d(-0.381, 0.381);
         public static final Translation2d REAR_RIGHT_LOCATION = new Translation2d(-0.381, -0.381);
 
-        // Angular offsets for swerve modules (last year's values)
+        // Angular offsets for swerve modules
         public static final double FRONT_LEFT_OFFSET = -(0.0431 + 0.39216 + Math.PI - (2 * Math.PI));
         public static final double FRONT_RIGHT_OFFSET = -(1.57568);
         public static final double REAR_LEFT_OFFSET = -(-0.97338 + 6.2831);
         public static final double REAR_RIGHT_OFFSET = -(0.278867);
+    }
+
+    public static final class NeoMotorConstants {
+        public static final double FREE_SPEED_RPM = 5676;
     }
 
     public static class Turn {
@@ -128,18 +153,5 @@ public final class Constants {
         public static final double REEF_LEVEL_4 = 2.0;
         
         public static final double TOLERANCE = 0.05;
-    }
-
-    public static class AlgaeHolder {
-        public static final int PIVOT_MOTOR_ID = 17;
-        public static final int ROLLING_MOTOR_ID = 18;
-        public static final int PIVOT_ENCODER_CHANNEL = 5;
-        public static final int LIMIT_SWITCH_CHANNEL = 6;
-
-        public static final double PIVOT_P = 0.1;
-        public static final double PIVOT_I = 0.0;
-        public static final double PIVOT_D = 0.0;
-
-        public static final double ROLLING_POWER = 0.5;
     }
 }

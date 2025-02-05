@@ -1,16 +1,14 @@
 package frc.robot.commands;
 
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Constants.Drive;
 import frc.robot.ControlInput;
+import frc.robot.Constants.Drive;
 import frc.robot.subsystems.DriveSubsystem;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj2.command.Command;
 
 public class SwerveDriveCommand extends Command {
     private final DriveSubsystem subsystem;
     private final ControlInput controlInput;
-
     private final PIDController rotationPID;
     private final PIDController forwardPID;
     private final PIDController strafePID;
@@ -36,44 +34,37 @@ public class SwerveDriveCommand extends Command {
 
     @Override
     public void execute() {
-        double deadband = 0.095;
+        double forward = linearDeadband(controlInput.getForward());
+        double strafe = linearDeadband(controlInput.getStrafe());
+        double rotation = linearDeadband(controlInput.getRotation());
 
-        double forward = applyDeadbandAndScale(controlInput.getForward(), 2.0, deadband);
-        double strafe = applyDeadbandAndScale(controlInput.getStrafe(), 2.0, deadband);
-        double rotation = applyDeadbandAndScale(controlInput.getRotation(), 2.0, deadband);
-
-        forward *= Drive.MAX_SPEED;
-        strafe *= Drive.MAX_SPEED;
-        rotation *= Drive.MAX_ANGULAR_SPEED;
         
+        forward = clamp(forward, -1.0, 1.0);
+        strafe = clamp(strafe, -1.0, 1.0);
+        rotation = clamp(rotation, -1.0, 1.0);
 
-        double smoothedRotation = rotationPID.calculate(rotation, 0.0);
+        forward = Math.copySign(forward * forward, forward) * Drive.MAX_SPEED;
+        strafe = Math.copySign(strafe * strafe, strafe) * Drive.MAX_SPEED;
+        rotation = Math.copySign(rotation * rotation, rotation) * Drive.MAX_ANGULAR_SPEED;
 
-        // Apply inputs to the swerve drive
-        subsystem.drive(forward, strafe, smoothedRotation, true);
-
-        // Debug output to SmartDashboard
-        SmartDashboard.putNumber("Gyro Yaw", subsystem.getNavX().getYaw());
-        SmartDashboard.putNumber("Gyro Angle", subsystem.getNavX().getAngle());
-        SmartDashboard.putNumber("Gyro Heading", subsystem.getHeading());
-
-        SmartDashboard.putNumber("Forward Input", forward);
-        SmartDashboard.putNumber("Strafe Input", strafe);
-        SmartDashboard.putNumber("Rotation Input", rotation);
-        SmartDashboard.putNumber("Smoothed Rotation", smoothedRotation);
+        subsystem.drive(forward, strafe, rotation, true, false);
     }
 
-    private double applyDeadbandAndScale(double input, double power, double deadband) {
+    private double linearDeadband(double input) {
+        final double deadband = 0.095;
         if (Math.abs(input) < deadband) {
             return 0;
+        } else {
+            return input - Math.copySign(deadband, input);
         }
-        return Math.copySign(Math.pow(input, power), input);
+    }
+
+    public double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     @Override
-    public void end(boolean interrupted) {
-        subsystem.drive(0, 0, 0, true);
-    }
+    public void end(boolean interrupted) {}
 
     @Override
     public boolean isFinished() {
