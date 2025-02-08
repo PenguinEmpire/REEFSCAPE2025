@@ -1,6 +1,4 @@
 package frc.robot;
-
-import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
@@ -41,8 +39,8 @@ public final class Constants {
         public static final int TURN_CURRENT_LIMIT = 30;
 
         //  Updated Kraken X60 PID Values for Stability
-        public static final double KRAKEN_P = 0.12; // ✅ Increased for better response
-        public static final double KRAKEN_I = 0.0;  // ✅No integral needed
+        public static final double KRAKEN_P = 0.12; //  Increased for better response
+        public static final double KRAKEN_I = 0.0;  // No integral needed
         public static final double KRAKEN_D = 0.0;  //  Removed to prevent overshoot
         public static final double KRAKEN_KV = 1.51; //  From SYSID tuning
         public static final double KRAKEN_KS = 0.32;
@@ -58,9 +56,13 @@ public final class Constants {
         public static final double TURN_ENCODER_POSITION_PID_MAX_INPUT = 2 * Math.PI;
 
         // Motor Directions
-        public static final InvertedValue KRAKEN_INVERTED = InvertedValue.Clockwise_Positive;
         public static final boolean TURN_MOTOR_INVERTED = true;
-        public static final boolean TURN_ENCODER_INVERTED = false;
+        public static final boolean TURN_ENCODER_INVERTED = true;
+        public static final boolean DRIVE_MOTOR_INVERTED = false; // Start with false and tune for dame and alex
+        public static final boolean DRIVE_ENCODER_INVERTED = false; // Start with false
+
+
+
 
         public static final double TRACK_WIDTH = Units.inchesToMeters(30.0);
         public static final double WHEEL_BASE = Units.inchesToMeters(30.0);

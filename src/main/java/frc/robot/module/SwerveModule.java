@@ -18,6 +18,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 
 public class SwerveModule {
@@ -32,7 +33,6 @@ public class SwerveModule {
     public SwerveModule(int drivingCANId, int turningCANId, double chassisAngularOffset) {
         //  Configure Kraken X60 (Drive Motor)
         m_drivingTalonFX = new TalonFX(drivingCANId);
-        m_drivingTalonFX.getConfigurator().apply(new TalonFXConfiguration(), 50);
 
         TalonFXConfiguration driveConfig = new TalonFXConfiguration();
         driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -42,20 +42,24 @@ public class SwerveModule {
         driveConfig.Slot0.kD = Constants.Drive.KRAKEN_D;
         driveConfig.Slot0.kV = Constants.Drive.KRAKEN_KV;
         driveConfig.Slot0.kS = Constants.Drive.KRAKEN_KS;
+
+        //  Apply and persist config
         m_drivingTalonFX.getConfigurator().apply(driveConfig, 50);
 
-        //  Configure SparkMax (Turn Motor)
+        //  Configure SparkMax (Turn Motor) using REVLib 2025
         m_turningSparkMax = new SparkMax(turningCANId, MotorType.kBrushless);
-        SparkMaxConfig turnConfig = new SparkMaxConfig(); 
+        SparkMaxConfig turnConfig = new SparkMaxConfig();
 
-        turnConfig.inverted(Constants.Drive.TURN_MOTOR_INVERTED);
-        turnConfig.idleMode(IdleMode.kBrake);
+        turnConfig
+            .inverted(Constants.Drive.TURN_MOTOR_INVERTED)
+            .idleMode(IdleMode.kBrake);
 
         //  Setup Absolute Encoder (Turning)
         m_turningEncoder = m_turningSparkMax.getAbsoluteEncoder();
         turnConfig.encoder
             .positionConversionFactor(Constants.Drive.TURN_POSITION_CONVERSION)
-            .velocityConversionFactor(Constants.Drive.TURN_VELOCITY_CONVERSION);
+            .velocityConversionFactor(Constants.Drive.TURN_VELOCITY_CONVERSION)
+            .inverted(Constants.Drive.TURN_ENCODER_INVERTED); // ✅ Set encoder inversion here
 
         //  Setup PID Controller for Turning
         turnConfig.closedLoop
@@ -65,64 +69,65 @@ public class SwerveModule {
             .positionWrappingMinInput(Constants.Drive.TURN_ENCODER_POSITION_PID_MIN_INPUT)
             .positionWrappingMaxInput(Constants.Drive.TURN_ENCODER_POSITION_PID_MAX_INPUT);
 
-        //  Apply Configurations
+        //  Apply config with persistence using REVLib 2025 API
         m_turningSparkMax.configure(turnConfig, SparkBase.ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
         m_turningPIDController = m_turningSparkMax.getClosedLoopController();
 
-        // 🔹 **New Feature: Automatic Calibration on Boot**
+        System.out.println("Module " + turningCANId + " Encoder Initial Position: " + m_turningEncoder.getPosition());
+
+        // Auto-calibrate the offset on startup
         calibrateModuleOffset(chassisAngularOffset);
 
-        // Initialize desired state
+        //  Initialize desired state
         m_desiredState = new SwerveModuleState(0.0, new Rotation2d(m_turningEncoder.getPosition()));
 
-        //  Reset ONLY the drive encoder
         resetEncoders();
     }
 
-    /** 🔹 **Calibrates the encoder offset automatically on boot** */
     private void calibrateModuleOffset(double storedOffset) {
         double absoluteEncoderPosition = m_turningEncoder.getPosition();
         m_chassisAngularOffset = storedOffset - absoluteEncoderPosition;
-
-        // 🟢 **Log the offset for debugging**
-        System.out.println("Calibrated Offset for Module: " + m_chassisAngularOffset);
+        System.out.println("Calibrated Offset for Module " + m_turningSparkMax.getDeviceId() + ": " + m_chassisAngularOffset);
     }
 
-    // 🔹 **Fix: Use m_desiredState in getState()**
+    public void updateDashboard() {
+        SmartDashboard.putNumber("Module " + m_turningSparkMax.getDeviceId() + " Encoder", m_turningEncoder.getPosition());
+        SmartDashboard.putNumber("Module " + m_turningSparkMax.getDeviceId() + " Offset", m_chassisAngularOffset);
+    }
+
     public SwerveModuleState getState() {
         return m_desiredState;
     }
 
-    // Get the current position of the swerve module. 
     public SwerveModulePosition getPosition() {
+        double encoderValue = m_turningEncoder.getPosition() - m_chassisAngularOffset;
+        SmartDashboard.putNumber("Module " + m_turningSparkMax.getDeviceId() + " Encoder Adjusted", encoderValue);
+        
         return new SwerveModulePosition(
             m_drivingTalonFX.getPosition().getValueAsDouble() * Constants.Drive.KRAKEN_POSITION_CONVERSION,
-            new Rotation2d(m_turningEncoder.getPosition() - m_chassisAngularOffset)
+            new Rotation2d(encoderValue)
         );
     }
 
-    // Set desired state of the swerve module.
     public void setDesiredState(SwerveModuleState desiredState) {
-        SwerveModuleState correctedState = new SwerveModuleState(
+        // Create a copy of the desired state to call instance method optimize()
+        SwerveModuleState optimizedState = new SwerveModuleState(
             desiredState.speedMetersPerSecond,
-            desiredState.angle.plus(Rotation2d.fromRadians(m_chassisAngularOffset))
+            desiredState.angle
         );
 
-        //  Optimize to minimize unnecessary turns
-        correctedState.optimize(new Rotation2d(m_turningEncoder.getPosition()));
+        // Apply optimization (new 2025 instance method)
+        optimizedState.optimize(new Rotation2d(m_turningEncoder.getPosition()));
 
-        //  Drive Motor Control
-        m_drivingTalonFX.setControl(m_driveVelocityControl.withVelocity(correctedState.speedMetersPerSecond));
+        //  Apply optimized state
+        m_drivingTalonFX.setControl(m_driveVelocityControl.withVelocity(optimizedState.speedMetersPerSecond));
+        m_turningPIDController.setReference(optimizedState.angle.getRadians(), SparkBase.ControlType.kPosition);
 
-        //  Turning Motor Position Control
-        m_turningPIDController.setReference(correctedState.angle.getRadians(), SparkBase.ControlType.kPosition);
-
-        // ✅ Fix: Store the desired state so it is used in `getState()`
-        m_desiredState = correctedState;
+        m_desiredState = optimizedState;
     }
 
-    /** Reset the drive encoder */
     public void resetEncoders() {
-        m_drivingTalonFX.setPosition(0);
+        m_drivingTalonFX.setPosition(0); 
     }
 }

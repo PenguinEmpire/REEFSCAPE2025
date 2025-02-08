@@ -10,7 +10,7 @@ public class ControlInput {
     }
 
     public double getForward() {
-        return -ps5Controller.getLeftY(); 
+        return ps5Controller.getLeftY(); 
     }
 
     public double getStrafe() {
