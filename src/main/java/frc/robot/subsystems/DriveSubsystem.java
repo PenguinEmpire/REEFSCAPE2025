@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.studica.frc.AHRS;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -167,6 +168,9 @@ public class DriveSubsystem extends SubsystemBase {
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, Constants.Drive.MAX_SPEED);
         setModuleStates(swerveModuleStates);
     }
+    public AHRS getNavX() {
+        return navX;
+    }
 
     public void setModuleStates(SwerveModuleState[] desiredStates) {
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.Drive.MAX_SPEED);
@@ -183,4 +187,5 @@ public class DriveSubsystem extends SubsystemBase {
     public void zeroHeading() {
         navX.reset();
     }
+   
 }

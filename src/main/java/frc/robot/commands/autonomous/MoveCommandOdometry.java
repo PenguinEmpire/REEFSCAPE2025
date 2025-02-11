@@ -72,7 +72,18 @@ public class MoveCommandOdometry extends Command {
     public boolean isFinished() {
         double posError = m_keepVelocity ? 0.02 : 0.009;
         double velError = m_keepVelocity ? 9999 : 0.1;
-        return Math.abs(xPID.getPositionError()) < posError && Math.abs(xPID.getVelocityError()) < velError &&
-                Math.abs(yPID.getPositionError()) < posError && Math.abs(yPID.getVelocityError()) < velError;
+    
+        // Compute position error manually
+        double xPositionError = xPID.getSetpoint() - m_subsystem.getPose().getX();
+        double yPositionError = yPID.getSetpoint() - m_subsystem.getPose().getY();
+    
+        // Compute velocity error manually using derivative of error
+        double xVelocityError = xPID.getSetpoint() - (m_subsystem.getPose().getX() + xPID.getP() * xPositionError);
+        double yVelocityError = yPID.getSetpoint() - (m_subsystem.getPose().getY() + yPID.getP() * yPositionError);
+    
+        return Math.abs(xPositionError) < posError && Math.abs(xVelocityError) < velError &&
+               Math.abs(yPositionError) < posError && Math.abs(yVelocityError) < velError;
     }
+    
 }
+    

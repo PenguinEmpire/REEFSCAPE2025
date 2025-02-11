@@ -3,66 +3,50 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
 
+
 public final class Constants {
     public static class Drive {
-        public static final double WHEEL_DIAMETER = 0.1016; // 4 inches
+        public static final double WHEEL_DIAMETER = 0.1016;
+        public static final double WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER * Math.PI;
+
         public static final double DRIVE_REDUCTION = 8.33;
         public static final double DRIVE_CONVERSION = WHEEL_DIAMETER * Math.PI / DRIVE_REDUCTION;
         public static final double MAX_SPEED = 4.7; 
         public static final double MAX_ANGULAR_SPEED = 2 * Math.PI;
 
-        // Slew Rates (to prevent sharp accelerations)
         public static final double DIRECTION_SLEW_RATE = 1.2;
         public static final double MAGNITUDE_SLEW_RATE = 1.8;
         public static final double ROTATIONAL_SLEW_RATE = 2.0;
 
-        // Kraken X60 Encoder Values
-        public static final double KRAKEN_TICKS_PER_ROTATION = 2048.0;
-        public static final double KRAKEN_POSITION_CONVERSION = DRIVE_CONVERSION / KRAKEN_TICKS_PER_ROTATION;
-        public static final double KRAKEN_VELOCITY_CONVERSION = KRAKEN_POSITION_CONVERSION * 10.0;
+        
+        public static final double KRAKEN_POSITION_CONVERSION = WHEEL_CIRCUMFERENCE / DRIVE_REDUCTION;  
+    public static final double KRAKEN_VELOCITY_CONVERSION = KRAKEN_POSITION_CONVERSION / 60.0;
 
-        // Turn Motor Configurations
         public static final double TURN_GEAR_RATIO = 18.0;
         public static final double TURN_POSITION_CONVERSION = 2 * Math.PI / TURN_GEAR_RATIO;
         public static final double TURN_VELOCITY_CONVERSION = TURN_POSITION_CONVERSION / 60.0;
 
-        // Fixed Gear Ratio Calculation
-        public static final int DRIVING_MOTOR_PINION_TEETH = 12;
-        public static final double WHEEL_CIRCUMFERENCE_METERS = WHEEL_DIAMETER * Math.PI;
-        public static final double DRIVING_MOTOR_REDUCTION = (45.0 * 22 * 34) / (DRIVING_MOTOR_PINION_TEETH * 15 * 24);
-        public static final double DRIVING_MOTOR_FREE_SPEED_RPS = 5676.0 / 60; // Neo Free Speed
-        public static final double DRIVE_WHEEL_FREE_SPEED_RPS = (DRIVING_MOTOR_FREE_SPEED_RPS * WHEEL_CIRCUMFERENCE_METERS)
-            / DRIVING_MOTOR_REDUCTION;
-
-        // Current Limits
         public static final int KRAKEN_CURRENT_LIMIT = 40;
         public static final int TURN_CURRENT_LIMIT = 30;
 
-        //  Updated Kraken X60 PID Values for Stability
-        public static final double KRAKEN_P = 0.12; //  Increased for better response
-        public static final double KRAKEN_I = 0.0;  // No integral needed
-        public static final double KRAKEN_D = 0.0;  //  Removed to prevent overshoot
-        public static final double KRAKEN_KV = 1.51; //  From SYSID tuning
+        public static final double KRAKEN_P = 0.05;
+        public static final double KRAKEN_I = 0.0001;
+        public static final double KRAKEN_D = 0.001;
+        public static final double KRAKEN_KV = 1.51;
         public static final double KRAKEN_KS = 0.32;
         public static final double KRAKEN_KA = 0.27;
 
-        //  Updated Safe Turning PID Values (Prevent gear grinding)
-        public static final double TURN_P = 0.6;  //  Reduced from 1.0 to prevent oscillation
-        public static final double TURN_I = 0.0;
-        public static final double TURN_D = 0.01;
+        public static final double TURN_P = 0.35;
+        public static final double TURN_I = 0.0002;
+        public static final double TURN_D = 0.003;
 
-        // Turning Encoder Range
         public static final double TURN_ENCODER_POSITION_PID_MIN_INPUT = 0.0;
         public static final double TURN_ENCODER_POSITION_PID_MAX_INPUT = 2 * Math.PI;
 
-        // Motor Directions
-        public static final boolean TURN_MOTOR_INVERTED = true;
-        public static final boolean TURN_ENCODER_INVERTED = true;
-        public static final boolean DRIVE_MOTOR_INVERTED = false; // Start with false and tune for dame and alex
-        public static final boolean DRIVE_ENCODER_INVERTED = false; // Start with false
-
-
-
+        public static final boolean TURN_MOTOR_INVERTED = true;  // Default TRUE
+        public static final boolean TURN_ENCODER_INVERTED = true;  // Default TRUE
+        public static final boolean DRIVE_MOTOR_INVERTED = false;  // Default FALSE
+        public static final boolean DRIVE_ENCODER_INVERTED = false;  // Default FALSE
 
         public static final double TRACK_WIDTH = Units.inchesToMeters(30.0);
         public static final double WHEEL_BASE = Units.inchesToMeters(30.0);
@@ -72,7 +56,12 @@ public final class Constants {
             new Translation2d(WHEEL_BASE / 2, -TRACK_WIDTH / 2),
             new Translation2d(-WHEEL_BASE / 2, TRACK_WIDTH / 2),
             new Translation2d(-WHEEL_BASE / 2, -TRACK_WIDTH / 2)
+
+        
         );
+        public static final double TURN_ENCODER_POSITION_FACTOR = (2 * Math.PI); // radians
+        public static final double TURN_ENCODER_VELOCITY_FACTOR = (2 * Math.PI) / 60.0; // radians per second
+    
     }
 
     public static class ModuleConstants {
@@ -95,10 +84,10 @@ public final class Constants {
         public static final Translation2d REAR_RIGHT_LOCATION = new Translation2d(-0.381, -0.381);
 
       
-        public static final double FRONT_LEFT_OFFSET = -(0.0431 + 0.39216 + Math.PI - (2 * Math.PI));
-        public static final double FRONT_RIGHT_OFFSET = -(1.57568);
-        public static final double REAR_LEFT_OFFSET = -(-0.97338 + 6.2831);
-        public static final double REAR_RIGHT_OFFSET = -(0.278867);
+        public static final double FRONT_LEFT_OFFSET = 0.9104564;
+        public static final double FRONT_RIGHT_OFFSET = 0.6903169;
+        public static final double REAR_LEFT_OFFSET = 0.0777978;
+        public static final double REAR_RIGHT_OFFSET = 0.0185248;
     }
 
   
