@@ -130,7 +130,7 @@ public final class Constants {
 
         public static final int BORE_ENCODER_CHANNEL = 3;
 
-        public static final double DEFAULT_ROLLER_POWER = 0.75;
+        public static final double DEFAULT_ROLLER_POWER = 0.25;
         public static final int MOTOR_CURRENT_LIMIT = 30;
 
         public static final double ROTATION_P = 0.05;

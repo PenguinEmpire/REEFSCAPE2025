@@ -1,22 +1,96 @@
+// package frc.robot.commands;
+
+// import frc.robot.ControlInput;
+// import frc.robot.Constants.Drive;
+// import frc.robot.subsystems.DriveSubsystem;
+// import edu.wpi.first.math.controller.PIDController;
+// import edu.wpi.first.wpilibj2.command.Command;
+
+
+// public class SwerveDriveCommand extends Command {
+//     private final DriveSubsystem subsystem;
+//     private final ControlInput controlInput;
+//     private final PIDController rotationPID;
+//     private final PIDController forwardPID;
+//     private final PIDController strafePID;
+
+//     public SwerveDriveCommand(DriveSubsystem subsystem, ControlInput controlInput) {
+//         this.subsystem = subsystem;
+//         this.controlInput = controlInput;
+
+//         addRequirements(subsystem);
+//         setName("SwerveDrive");
+
+//         rotationPID = new PIDController(0.015, 0.001, 0.0001);
+//         forwardPID = new PIDController(0, 0, 0);
+//         strafePID = new PIDController(0, 0, 0);
+//     }
+
+//     @Override
+//     public void initialize() {
+//         rotationPID.reset();
+//         forwardPID.reset();
+//         strafePID.reset();
+//     }
+
+//     @Override
+//     public void execute() {
+//         double forward = linearDeadband(controlInput.getForward());
+//         double strafe = linearDeadband(controlInput.getStrafe());
+//         double rotation = linearDeadband(controlInput.getRotation());
+
+        
+//         forward = clamp(forward, -1.0, 1.0);
+//         strafe = clamp(strafe, -1.0, 1.0);
+//         rotation = clamp(rotation, -1.0, 1.0);
+
+//         forward = Math.copySign(forward * forward, forward) * Drive.MAX_SPEED;
+//         strafe = Math.copySign(strafe * strafe, strafe) * Drive.MAX_SPEED;
+//         rotation = Math.copySign(rotation * rotation, rotation) * Drive.MAX_ANGULAR_SPEED;
+
+//         subsystem.drive(forward, strafe, rotation, true, false);
+//     }
+
+//     private double linearDeadband(double input) {
+//         final double deadband = 0.095;
+//         if (Math.abs(input) < deadband) {
+//             return 0;
+//         } else {
+//             return input - Math.copySign(deadband, input);
+//         }
+//     }
+
+//     public double clamp(double value, double min, double max) {
+//         return Math.max(min, Math.min(max, value));
+//     }
+
+//     @Override
+//     public void end(boolean interrupted) {}
+
+//     @Override
+//     public boolean isFinished() {
+//         return false;
+//     }
+// }
+
 package frc.robot.commands;
 
-import frc.robot.ControlInput;
-import frc.robot.Constants.Drive;
-import frc.robot.subsystems.DriveSubsystem;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.Command;
-
+import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
+import frc.robot.Constants.Drive;
+import frc.robot.subsystems.DriveSubsystem;
 
 public class SwerveDriveCommand extends Command {
     private final DriveSubsystem subsystem;
-    private final ControlInput controlInput;
+    private final CommandPS5Controller ps5Controller;
     private final PIDController rotationPID;
     private final PIDController forwardPID;
     private final PIDController strafePID;
 
-    public SwerveDriveCommand(DriveSubsystem subsystem, ControlInput controlInput) {
+    public SwerveDriveCommand(DriveSubsystem subsystem, CommandPS5Controller ps5Controller) {
         this.subsystem = subsystem;
-        this.controlInput = controlInput;
+        this.ps5Controller = ps5Controller;
 
         addRequirements(subsystem);
         setName("SwerveDrive");
@@ -35,32 +109,37 @@ public class SwerveDriveCommand extends Command {
 
     @Override
     public void execute() {
-        double forward = linearDeadband(controlInput.getForward());
-        double strafe = linearDeadband(controlInput.getStrafe());
-        double rotation = linearDeadband(controlInput.getRotation());
+        double forward = applyDeadband(-ps5Controller.getLeftY()); // Y is inverted
+        double strafe = applyDeadband(ps5Controller.getLeftX());
+        double rotation = applyDeadband(-ps5Controller.getRightX()); // X is inverted
 
-        
+        // Normalize inputs
         forward = clamp(forward, -1.0, 1.0);
         strafe = clamp(strafe, -1.0, 1.0);
         rotation = clamp(rotation, -1.0, 1.0);
 
-        forward = Math.copySign(forward * forward, forward) * Drive.MAX_SPEED;
-        strafe = Math.copySign(strafe * strafe, strafe) * Drive.MAX_SPEED;
-        rotation = Math.copySign(rotation * rotation, rotation) * Drive.MAX_ANGULAR_SPEED;
+        // Apply squaring for smoother movement
+        forward = Math.signum(forward) * (forward * forward);
+        strafe = Math.signum(strafe) * (strafe * strafe);
+        rotation = Math.signum(rotation) * (rotation * rotation);
+
+        // Scale by max speed values
+        forward *= Drive.MAX_SPEED;
+        strafe *= Drive.MAX_SPEED;
+        rotation *= Drive.MAX_ANGULAR_SPEED;
 
         subsystem.drive(forward, strafe, rotation, true, false);
     }
 
-    private double linearDeadband(double input) {
-        final double deadband = 0.095;
+    private double applyDeadband(double input) {
+        final double deadband = 0.1;
         if (Math.abs(input) < deadband) {
-            return 0;
-        } else {
-            return input - Math.copySign(deadband, input);
+            return 0.0;
         }
+        return (input - Math.copySign(deadband, input)) / (1.0 - deadband);
     }
 
-    public double clamp(double value, double min, double max) {
+    private double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
     }
 

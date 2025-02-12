@@ -10,7 +10,7 @@ public class ControlInput {
     }
 
     public double getForward() {
-        return ps5Controller.getLeftY(); 
+        return -ps5Controller.getLeftY(); // WPILib inverts Y-axis
     }
 
     public double getStrafe() {
@@ -18,6 +18,11 @@ public class ControlInput {
     }
 
     public double getRotation() {
-        return -ps5Controller.getRightX(); 
+        return -ps5Controller.getRightX(); // Negative for clockwise rotation
+    }
+
+    // Getter method for PS5Controller instance
+    public PS5Controller getController() {
+        return ps5Controller;
     }
 }
