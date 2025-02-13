@@ -6,7 +6,7 @@ import edu.wpi.first.math.util.Units;
 
 public final class Constants {
     public static class Drive {
-        public static final double WHEEL_DIAMETER = 0.1016;
+        public static final double WHEEL_DIAMETER = 4; //(.1016 meters)
         public static final double WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER * Math.PI;
 
         public static final double DRIVE_REDUCTION = 8.33;

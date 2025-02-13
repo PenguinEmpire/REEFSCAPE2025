@@ -68,7 +68,7 @@ import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 
 public class RobotContainer {
-    private final CommandPS5Controller ps5Controller = new CommandPS5Controller(0); // ✅ WPILib recommended method
+    private final CommandPS5Controller ps5Controller = new CommandPS5Controller(0); 
     private final DriveSubsystem driveSubsystem = new DriveSubsystem();
     private final IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
     private SwerveDriveCommand swerveDriveCommand; 
@@ -82,8 +82,24 @@ public class RobotContainer {
         driveSubsystem.getNavX().setAngleAdjustment(0);
     }
 
+
     private void configureBindings() {
         driveSubsystem.setDefaultCommand(swerveDriveCommand);
+
+       
+// //triangle for intake
+//         ps5Controller.triangle().whileTrue(
+//     new RunCommand(() -> intakeSubsystem.spinRollers(true), intakeSubsystem)
+//     ) .onFalse(
+//     new InstantCommand(intakeSubsystem::stopAllRollers, intakeSubsystem)
+//     ) ;
+// // circle for outtake
+//          ps5Controller.circle().whileTrue(
+//     new RunCommand(() -> intakeSubsystem.spinRollers(false), intakeSubsystem)
+//     ).onFalse(
+//     new InstantCommand(intakeSubsystem::stopAllRollers, intakeSubsystem)
+//     );
+
 
         // triangle for Intake
         ps5Controller.triangle().whileTrue(
